@@ -116,6 +116,14 @@ def chat():
     response.headers["Access-Control-Allow-Origin"] = "*"
     return response
 
+@app.errorhandler(500)
+def handle_500(e):
+    import traceback
+    response = jsonify({"error": str(e), "trace": traceback.format_exc()})
+    response.headers["Access-Control-Allow-Origin"] = "*"
+    response.status_code = 500
+    return response
+
 
 @app.route("/health")
 def health():
