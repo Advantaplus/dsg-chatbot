@@ -7,7 +7,7 @@ from email.mime.multipart import MIMEMultipart
 
 app = Flask(__name__)
 
-ANTHROPIC_API_KEY = os.environ.get("ANTHROPIC_API_KEY")
+ANTHROPIC_API_KEY = (os.environ.get("ANTHROPIC_API_KEY") or "").strip().replace("\n", "").replace(" ", "")
 print(f"API KEY LOADED: {'YES - starts with ' + ANTHROPIC_API_KEY[:10] if ANTHROPIC_API_KEY else 'NO - NOT FOUND'}", flush=True)
 NOTIFY_EMAIL = os.environ.get("NOTIFY_EMAIL", "lee@digitalscanninggroup.com")
 SMTP_USER = os.environ.get("SMTP_USER")
