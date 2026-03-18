@@ -40,18 +40,23 @@ Rules:
 - Once you have their name and email, confirm you'll pass details to Lee and he'll be in touch within 1 business day"""
 
 
-def send_notification(name, email, phone):
-    if not SMTP_USER or not SMTP_PASS:
+def send_notification(name, email, phone, smtp_user=None, smtp_pass=None, notify_email=None):
+    smtp_user = smtp_user or SMTP_USER
+    smtp_pass = smtp_pass or SMTP_PASS
+    notify_email = notify_email or NOTIFY_EMAIL
+    print(f"SMTP_USER={smtp_user}, SMTP_PASS set={'yes' if smtp_pass else 'no'}", flush=True)
+    if not smtp_user or not smtp_pass:
+        print("EMAIL SKIPPED: no credentials", flush=True)
         return
     try:
         msg = MIMEMultipart("alternative")
-        msg["Subject"] = f"New Website Lead – {name}"
-        msg["From"] = SMTP_USER
-        msg["To"] = NOTIFY_EMAIL
+        msg["Subject"] = f"New Website Lead – {name or 'Unknown'}"
+        msg["From"] = smtp_user
+        msg["To"] = notify_email
         html = f"""<html><body style="font-family:Arial,sans-serif;max-width:600px;margin:32px auto">
 <h2 style="color:#1a3c6e">New Website Lead!</h2>
 <table style="width:100%;border-collapse:collapse">
-<tr><td style="padding:8px;color:#666;width:100px">Name</td><td style="padding:8px;font-weight:bold">{name}</td></tr>
+<tr><td style="padding:8px;color:#666;width:100px">Name</td><td style="padding:8px;font-weight:bold">{name or '—'}</td></tr>
 <tr style="background:#f9f9f9"><td style="padding:8px;color:#666">Email</td><td style="padding:8px">{email}</td></tr>
 <tr><td style="padding:8px;color:#666">Phone</td><td style="padding:8px">{phone or '—'}</td></tr>
 <tr style="background:#f9f9f9"><td style="padding:8px;color:#666">Source</td><td style="padding:8px">Website Chatbot</td></tr>
@@ -59,9 +64,9 @@ def send_notification(name, email, phone):
 </body></html>"""
         msg.attach(MIMEText(html, "html"))
         with smtplib.SMTP_SSL("smtp.gmail.com", 465) as server:
-            server.login(SMTP_USER, SMTP_PASS)
-            server.sendmail(SMTP_USER, NOTIFY_EMAIL, msg.as_string())
-        print(f"EMAIL SENT to {NOTIFY_EMAIL}", flush=True)
+            server.login(smtp_user, smtp_pass)
+            server.sendmail(smtp_user, notify_email, msg.as_string())
+        print(f"EMAIL SENT to {notify_email}", flush=True)
     except Exception as e:
         print(f"EMAIL ERROR: {e}", flush=True)
 
@@ -112,7 +117,7 @@ def chat():
     print(f"LEAD STATE: {lead}", flush=True)
     if lead.get("email") and not lead.get("saved"):
         print(f"LEAD CAPTURED: {lead}", flush=True)
-        t = threading.Thread(target=send_notification, args=(lead.get("name",""), lead.get("email",""), lead.get("phone","")))
+        t = threading.Thread(target=send_notification, args=(lead.get("name",""), lead.get("email",""), lead.get("phone",""), SMTP_USER, SMTP_PASS, NOTIFY_EMAIL))
         t.daemon = False
         t.start()
         add_to_crm(lead.get("name",""), lead.get("email",""), lead.get("phone",""))
