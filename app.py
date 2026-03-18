@@ -112,7 +112,9 @@ def chat():
     print(f"LEAD STATE: {lead}", flush=True)
     if lead.get("email") and not lead.get("saved"):
         print(f"LEAD CAPTURED: {lead}", flush=True)
-        send_notification(lead.get("name",""), lead.get("email",""), lead.get("phone",""))
+        t = threading.Thread(target=send_notification, args=(lead.get("name",""), lead.get("email",""), lead.get("phone","")))
+        t.daemon = False
+        t.start()
         add_to_crm(lead.get("name",""), lead.get("email",""), lead.get("phone",""))
         saved = True
 
