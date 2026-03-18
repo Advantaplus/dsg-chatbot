@@ -112,8 +112,8 @@ def chat():
     print(f"LEAD STATE: {lead}", flush=True)
     if lead.get("email") and not lead.get("saved"):
         print(f"LEAD CAPTURED: {lead}", flush=True)
-        threading.Thread(target=send_notification, args=(lead.get("name",""), lead.get("email",""), lead.get("phone","")), daemon=True).start()
-        threading.Thread(target=add_to_crm, args=(lead.get("name",""), lead.get("email",""), lead.get("phone","")), daemon=True).start()
+        send_notification(lead.get("name",""), lead.get("email",""), lead.get("phone",""))
+        add_to_crm(lead.get("name",""), lead.get("email",""), lead.get("phone",""))
         saved = True
 
     response = jsonify({"reply": reply, "saved": saved})
