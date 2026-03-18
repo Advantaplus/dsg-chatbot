@@ -2,6 +2,7 @@ from flask import Flask, request, jsonify
 import anthropic
 import os
 import smtplib
+import threading
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 
@@ -111,8 +112,8 @@ def chat():
     print(f"LEAD STATE: {lead}", flush=True)
     if lead.get("email") and not lead.get("saved"):
         print(f"LEAD CAPTURED: {lead}", flush=True)
-        send_notification(lead["name"], lead.get("email", ""), lead.get("phone", ""))
-        add_to_crm(lead["name"], lead.get("email", ""), lead.get("phone", ""))
+        threading.Thread(target=send_notification, args=(lead.get("name",""), lead.get("email",""), lead.get("phone","")), daemon=True).start()
+        threading.Thread(target=add_to_crm, args=(lead.get("name",""), lead.get("email",""), lead.get("phone","")), daemon=True).start()
         saved = True
 
     response = jsonify({"reply": reply, "saved": saved})
