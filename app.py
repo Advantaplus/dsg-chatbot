@@ -63,7 +63,9 @@ def send_notification(name, email, phone, smtp_user=None, smtp_pass=None, notify
 </table>
 </body></html>"""
         msg.attach(MIMEText(html, "html"))
-        with smtplib.SMTP_SSL("smtp.gmail.com", 465) as server:
+        with smtplib.SMTP("smtp.gmail.com", 587) as server:
+            server.ehlo()
+            server.starttls()
             server.login(smtp_user, smtp_pass)
             server.sendmail(smtp_user, notify_email, msg.as_string())
         print(f"EMAIL SENT to {notify_email}", flush=True)
