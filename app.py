@@ -60,8 +60,9 @@ def send_notification(name, email, phone):
         with smtplib.SMTP_SSL("smtp.gmail.com", 465) as server:
             server.login(SMTP_USER, SMTP_PASS)
             server.sendmail(SMTP_USER, NOTIFY_EMAIL, msg.as_string())
-    except Exception:
-        pass
+        print(f"EMAIL SENT to {NOTIFY_EMAIL}", flush=True)
+    except Exception as e:
+        print(f"EMAIL ERROR: {e}", flush=True)
 
 
 def add_to_crm(name, email, phone):
@@ -107,7 +108,9 @@ def chat():
     reply = result.content[0].text.strip()
 
     saved = False
+    print(f"LEAD STATE: {lead}", flush=True)
     if lead.get("name") and lead.get("email") and not lead.get("saved"):
+        print(f"LEAD CAPTURED: {lead}", flush=True)
         send_notification(lead["name"], lead.get("email", ""), lead.get("phone", ""))
         add_to_crm(lead["name"], lead.get("email", ""), lead.get("phone", ""))
         saved = True
