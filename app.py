@@ -1,18 +1,15 @@
 from flask import Flask, request, jsonify
 import anthropic
 import os
-import smtplib
+import requests
 import threading
-from email.mime.text import MIMEText
-from email.mime.multipart import MIMEMultipart
 
 app = Flask(__name__)
 
 ANTHROPIC_API_KEY = (os.environ.get("ANTHROPIC_API_KEY") or "").strip().replace("\n", "").replace(" ", "")
 print(f"API KEY LOADED: {'YES - starts with ' + ANTHROPIC_API_KEY[:10] if ANTHROPIC_API_KEY else 'NO - NOT FOUND'}", flush=True)
 NOTIFY_EMAIL = os.environ.get("NOTIFY_EMAIL", "lee@digitalscanninggroup.com")
-SMTP_USER = os.environ.get("SMTP_USER")
-SMTP_PASS = os.environ.get("SMTP_PASS")
+RESEND_API_KEY = os.environ.get("RESEND_API_KEY", "re_UBNtV77e_6kSGsVdCpRvS4yqNufBZzpbr")
 CRM_URL = os.environ.get("CRM_URL", "http://100.127.244.118:5050")
 
 SYSTEM = """You are a friendly sales assistant for Digital Scanning Group (DSG), a professional surveying company.
@@ -40,19 +37,11 @@ Rules:
 - Once you have their name and email, confirm you'll pass details to Lee and he'll be in touch within 1 business day"""
 
 
-def send_notification(name, email, phone, smtp_user=None, smtp_pass=None, notify_email=None):
-    smtp_user = smtp_user or SMTP_USER
-    smtp_pass = smtp_pass or SMTP_PASS
+def send_notification(name, email, phone, resend_key=None, notify_email=None):
+    resend_key = resend_key or RESEND_API_KEY
     notify_email = notify_email or NOTIFY_EMAIL
-    print(f"SMTP_USER={smtp_user}, SMTP_PASS set={'yes' if smtp_pass else 'no'}", flush=True)
-    if not smtp_user or not smtp_pass:
-        print("EMAIL SKIPPED: no credentials", flush=True)
-        return
+    print(f"Sending via Resend to {notify_email}", flush=True)
     try:
-        msg = MIMEMultipart("alternative")
-        msg["Subject"] = f"New Website Lead – {name or 'Unknown'}"
-        msg["From"] = smtp_user
-        msg["To"] = notify_email
         html = f"""<html><body style="font-family:Arial,sans-serif;max-width:600px;margin:32px auto">
 <h2 style="color:#1a3c6e">New Website Lead!</h2>
 <table style="width:100%;border-collapse:collapse">
@@ -62,13 +51,18 @@ def send_notification(name, email, phone, smtp_user=None, smtp_pass=None, notify
 <tr style="background:#f9f9f9"><td style="padding:8px;color:#666">Source</td><td style="padding:8px">Website Chatbot</td></tr>
 </table>
 </body></html>"""
-        msg.attach(MIMEText(html, "html"))
-        with smtplib.SMTP("smtp.gmail.com", 587) as server:
-            server.ehlo()
-            server.starttls()
-            server.login(smtp_user, smtp_pass)
-            server.sendmail(smtp_user, notify_email, msg.as_string())
-        print(f"EMAIL SENT to {notify_email}", flush=True)
+        response = requests.post(
+            "https://api.resend.com/emails",
+            headers={"Authorization": f"Bearer {resend_key}", "Content-Type": "application/json"},
+            json={
+                "from": "DSG Chatbot <onboarding@resend.dev>",
+                "to": notify_email,
+                "subject": f"New Website Lead – {name or 'Unknown'}",
+                "html": html
+            },
+            timeout=10
+        )
+        print(f"EMAIL SENT: status={response.status_code} body={response.text}", flush=True)
     except Exception as e:
         print(f"EMAIL ERROR: {e}", flush=True)
 
@@ -119,7 +113,7 @@ def chat():
     print(f"LEAD STATE: {lead}", flush=True)
     if lead.get("email") and not lead.get("saved"):
         print(f"LEAD CAPTURED: {lead}", flush=True)
-        t = threading.Thread(target=send_notification, args=(lead.get("name",""), lead.get("email",""), lead.get("phone",""), SMTP_USER, SMTP_PASS, NOTIFY_EMAIL))
+        t = threading.Thread(target=send_notification, args=(lead.get("name",""), lead.get("email",""), lead.get("phone",""), RESEND_API_KEY, NOTIFY_EMAIL))
         t.daemon = False
         t.start()
         add_to_crm(lead.get("name",""), lead.get("email",""), lead.get("phone",""))
