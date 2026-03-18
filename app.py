@@ -109,7 +109,7 @@ def chat():
 
     saved = False
     print(f"LEAD STATE: {lead}", flush=True)
-    if lead.get("name") and lead.get("email") and not lead.get("saved"):
+    if lead.get("email") and not lead.get("saved"):
         print(f"LEAD CAPTURED: {lead}", flush=True)
         send_notification(lead["name"], lead.get("email", ""), lead.get("phone", ""))
         add_to_crm(lead["name"], lead.get("email", ""), lead.get("phone", ""))
