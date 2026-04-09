@@ -1,0 +1,7 @@
+{
+  "tool_name": "Bash",
+  "tool_input_preview": "{\"command\":\"railway link --project gregarious-healing 2>&1 && railway logs -n 5 2>&1\",\"description\":\"Link and check logs\"}",
+  "error": "Exit code 1\n> Select a workspace advantaplus's Projects\n> Select a project gregarious-healing\n> Select an environment production\n\nProject gregarious-healing linked successfully! 🎉\nNo service could be found. Please either link one with `railway service` or specify one via the `--service` flag.",
+  "timestamp": "2026-04-09T10:13:17.433Z",
+  "retry_count": 1
+}
